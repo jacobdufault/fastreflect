@@ -70,6 +70,15 @@ namespace FastReflect {
         }
 
         [Test]
+        public void Generation() {
+            var generator = new frGenerator();
+            // TODO: Find a good way to verify the result. Right now it's just
+            //       manual inspection and making sure the function doesn't crash.
+            string result = generator.GenerateForType("foo", frManager.Instance.Get(typeof(MyDerivedType)));
+            Console.WriteLine(result);
+        }
+
+        [Test]
         public void Sanity() {
             var manager = new frManager();
 

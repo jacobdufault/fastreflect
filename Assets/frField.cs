@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
@@ -77,7 +78,7 @@ namespace FastReflect {
 
             Name = property.Name;
             MemberType = property.PropertyType;
-            Attributes = (Attribute[])property.GetCustomAttributes(/*inherit:*/true);
+            Attributes = property.GetCustomAttributes(/*inherit:*/true).OfType<Attribute>().ToArray();
 
             CanRead = getMethod != null;
             CanWrite = setMethod != null;
