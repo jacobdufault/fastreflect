@@ -97,7 +97,7 @@ namespace FastReflect {
                 w.W(3, "new frField.AotData {{");
                 w.W(4, "FieldName = \"{0}\",", field.Name);
                 w.W(4, "Read = (o) => (({0})o).{1},", typeName, field.Name);
-                if (type.RawType.IsValueType)
+                if (type.RawType.Resolve().IsValueType)
                     w.W(4, "Write = (ref object o, object v) => {{ var u = ({0})o; u.{1} = ({2})v; o = u; }}", typeName, field.Name, field.MemberType.CSharpName(/*includeNamespace:*/ true));
                 else
                     w.W(4, "Write = (ref object o, object v) => (({0})o).{1} = ({2})v", typeName, field.Name, field.MemberType.CSharpName(/*includeNamespace:*/ true));

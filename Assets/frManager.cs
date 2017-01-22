@@ -30,8 +30,8 @@ namespace FastReflect {
                 _typeToFrTypeCache[type] = result;
 
                 result.RawType = type;
-                if (type.BaseType != null)
-                    result.Parent = Get(type.BaseType);
+                if (type.Resolve().BaseType != null)
+                    result.Parent = Get(type.Resolve().BaseType);
                 result.Interfaces = type.GetInterfaces().Select(t => Get(t)).ToArray();
                 GetFieldsAndMethods(type, out result.Fields, out result.Methods);
             }
@@ -40,7 +40,7 @@ namespace FastReflect {
 
         private void GetAotData(Type[] providerSourceTypes) {
             foreach (Type providerSourceType in providerSourceTypes) {
-                foreach (FieldInfo field in providerSourceType.GetFields()) {
+                foreach (FieldInfo field in providerSourceType.GetDeclaredFields()) {
                     if (!field.Name.StartsWith("Provider_"))
                         continue;
                     if (!field.IsStatic) {

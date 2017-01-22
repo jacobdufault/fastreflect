@@ -1,5 +1,8 @@
 ﻿#if !UNITY_EDITOR && UNITY_METRO && !ENABLE_IL2CPP
 #define USE_TYPEINFO
+#if !UNITY_WINRT_10_0
+#define USE_TYPEINFO_EXTENSIONS
+#endif
 #endif
 
 using System;
@@ -18,6 +21,24 @@ namespace FastReflect {
             BindingFlags.DeclaredOnly;
 #endif
 
+#if USE_TYPEINFO
+        public static TypeInfo Resolve(this Type type) {
+            return type.GetTypeInfo();
+        }
+#else
+        public static Type Resolve(this Type type) {
+            return type;
+        }
+#endif
+
+        public static FieldInfo[] GetDeclaredFields(this Type type) {
+#if USE_TYPEINFO
+            return type.GetTypeInfo().DeclaredFields.ToArray();
+#else
+            return type.GetFields(DeclaredFlags);
+#endif
+        }
+
         public static MemberInfo[] GetDeclaredMembers(this Type type) {
 #if USE_TYPEINFO
             return type.GetTypeInfo().DeclaredMembers.ToArray();
@@ -33,6 +54,43 @@ namespace FastReflect {
             return type.GetMethods(DeclaredFlags);
 #endif
         }
+
+
+#if USE_TYPEINFO_EXTENSIONS
+        public static bool IsAssignableFrom(this Type parent, Type child) {
+            return parent.GetTypeInfo().IsAssignableFrom(child.GetTypeInfo());
+        }
+
+        public static Type GetElementType(this Type type) {
+            return type.GetTypeInfo().GetElementType();
+        }
+
+        public static MethodInfo GetSetMethod(this PropertyInfo member, bool nonPublic = false) {
+            // only public requested but the set method is not public
+            if (nonPublic == false && member.SetMethod != null && member.SetMethod.IsPublic == false) return null;
+
+            return member.SetMethod;
+        }
+
+        public static MethodInfo GetGetMethod(this PropertyInfo member, bool nonPublic = false) {
+            // only public requested but the set method is not public
+            if (nonPublic == false && member.GetMethod != null && member.GetMethod.IsPublic == false) return null;
+
+            return member.GetMethod;
+        }
+
+        public static MethodInfo GetBaseDefinition(this MethodInfo method) {
+            return method.GetRuntimeBaseDefinition();
+        }
+
+        public static Type[] GetInterfaces(this Type type) {
+            return type.GetTypeInfo().ImplementedInterfaces.ToArray();
+        }
+
+        public static Type[] GetGenericArguments(this Type type) {
+            return type.GetTypeInfo().GenericTypeArguments.ToArray();
+        }
+#endif
 
         /// <summary>
         /// Returns a pretty name for the type in the style of one that you'd see
