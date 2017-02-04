@@ -55,7 +55,6 @@ namespace FastReflect {
 #endif
         }
 
-
 #if USE_TYPEINFO_EXTENSIONS
         public static bool IsAssignableFrom(this Type parent, Type child) {
             return parent.GetTypeInfo().IsAssignableFrom(child.GetTypeInfo());

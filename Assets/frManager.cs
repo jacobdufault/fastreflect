@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
+using FastReflect.Internal;
 
 namespace FastReflect {
     public class frManager {
@@ -120,6 +122,9 @@ namespace FastReflect {
                 // This is a method override. Skip it as it is not a "local"
                 // property -- it will appear in a parent type.
                 if (method != method.GetBaseDefinition())
+                    continue;
+                // Skip any compiler-generated methods, ie, auto-properties.
+                if (method.GetCustomAttributes(typeof(CompilerGeneratedAttribute), /*inherit:*/false).IsNullOrEmpty() == false)
                     continue;
 
                 // Find correct method aot data to use. Types can define

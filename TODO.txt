@@ -1,2 +1,2 @@
-// TODO: Invalidate AOT providers?
-// TODO: AOT generator
+TODO:
+  - JIT methods for field/property writing, method invocation

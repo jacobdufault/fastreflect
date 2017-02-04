@@ -194,27 +194,72 @@ namespace FastReflect {
 
         [Test]
         public void TestAccelerationPerformanceDifference() {
-            frType reflectedMyBaseType = (new frManager()).Get(typeof(AccelerationType));
-            frType acceleratedMyBaseType = (new frManager(typeof(AccelerationProvider))).Get(typeof(AccelerationType));
+            if (!frConfig.HasJit)
+                return;
 
+            frConfig.HasJit = false;
+            frType reflectedMyBaseType = (new frManager()).Get(typeof(AccelerationType));
             frMethod reflectedMethod = reflectedMyBaseType.GetDeclaredMethodsByName("Method")[0];
-            frMethod acceleratedMethod = acceleratedMyBaseType.GetDeclaredMethodsByName("Method")[0];
+            frField reflectedField = reflectedMyBaseType.GetDeclaredFieldByName("Field");
+            frConfig.HasJit = true;
+
+            frType jitMyBaseType = (new frManager()).Get(typeof(AccelerationType));
+            frMethod jitMethod = jitMyBaseType.GetDeclaredMethodsByName("Method")[0];
+            frField jitField = jitMyBaseType.GetDeclaredFieldByName("Field");
+
+            frType aotMyBaseType = (new frManager(typeof(AccelerationProvider))).Get(typeof(AccelerationType));
+            frMethod aotMethod = aotMyBaseType.GetDeclaredMethodsByName("Method")[0];
+            frField aotField = aotMyBaseType.GetDeclaredFieldByName("Field");
 
             const int ITERATION_COUNT = 50000;
             var instance = new AccelerationType();
 
-            var reflectedTime = Stopwatch.StartNew();
-            for (int i = 0; i < ITERATION_COUNT; ++i)
-                reflectedMethod.Invoke(instance, null);
-            reflectedTime.Stop();
+            // SECTION: Method calls.
+            {
+                var reflectedTime = Stopwatch.StartNew();
+                for (int i = 0; i < ITERATION_COUNT; ++i)
+                    reflectedMethod.Invoke(instance, null);
+                reflectedTime.Stop();
 
-            var acceleratedTime = Stopwatch.StartNew();
-            for (int i = 0; i < ITERATION_COUNT; ++i)
-                acceleratedMethod.Invoke(instance, null);
-            acceleratedTime.Stop();
+                var jitTime = Stopwatch.StartNew();
+                for (int i = 0; i < ITERATION_COUNT; ++i)
+                    jitMethod.Invoke(instance, null);
+                jitTime.Stop();
 
-            Console.WriteLine(string.Format("Reflected ticks: {0}, Accelerated ticks: {1}", reflectedTime.ElapsedTicks, acceleratedTime.ElapsedTicks));
-            Assert.IsTrue(acceleratedTime.ElapsedTicks * 2 < reflectedTime.ElapsedTicks);
+                var aotTime = Stopwatch.StartNew();
+                for (int i = 0; i < ITERATION_COUNT; ++i)
+                    aotMethod.Invoke(instance, null);
+                aotTime.Stop();
+
+                Console.WriteLine(string.Format("Invoke method ticks: Reflected={0}, Jit={1}, Aot={2}", reflectedTime.ElapsedTicks, jitTime.ElapsedTicks, aotTime.ElapsedTicks));
+                UnityEngine.Debug.Log(string.Format("Invoke method ticks: Reflected={0}, Jit={1}, Aot={2}", reflectedTime.ElapsedTicks, jitTime.ElapsedTicks, aotTime.ElapsedTicks));
+            }
+
+            // SECTION: Field reads
+            {
+                var reflectedTime = Stopwatch.StartNew();
+                for (int i = 0; i < ITERATION_COUNT; ++i)
+                    reflectedField.Read<float>(instance);
+                reflectedTime.Stop();
+
+                var jitTime = Stopwatch.StartNew();
+                for (int i = 0; i < ITERATION_COUNT; ++i)
+                    jitField.Read<float>(instance);
+                jitTime.Stop();
+
+                var aotTime = Stopwatch.StartNew();
+                for (int i = 0; i < ITERATION_COUNT; ++i)
+                    aotField.Read<float>(instance);
+                aotTime.Stop();
+
+                Console.WriteLine(string.Format("Read field ticks: Reflected={0}, Jit={1}, Aot={2}", reflectedTime.ElapsedTicks, jitTime.ElapsedTicks, aotTime.ElapsedTicks));
+                UnityEngine.Debug.Log(string.Format("Read field ticks: Reflected={0}, Jit={1}, Aot={2}", reflectedTime.ElapsedTicks, jitTime.ElapsedTicks, aotTime.ElapsedTicks));
+
+                // aot/jit should be at least 2x as fast as reflection
+                // It is usually a 5-10x performance difference, but there can be a lot of natural variation.
+                Assert.IsTrue(jitTime.ElapsedTicks * 2 < reflectedTime.ElapsedTicks);
+                Assert.IsTrue(aotTime.ElapsedTicks * 2 < reflectedTime.ElapsedTicks);
+            }
         }
     }
 }
